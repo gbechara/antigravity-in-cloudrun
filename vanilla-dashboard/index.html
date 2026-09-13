@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<!--
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Antigravity Swarm • Cloud Run Console</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Ambient Glassmorphic Glow Orbs -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+  <div class="glow-orb orb-3"></div>
+  <div class="glow-orb orb-4"></div>
+
+  <!-- App Shell Container -->
+  <div class="app-container">
+    
+    <!-- Top Glass Navigation Bar -->
+    <header class="glass-header">
+      <div class="header-left">
+        <div class="logo-wrapper">
+          <div class="logo-icon">▲</div>
+          <div class="logo-text">
+            <span class="logo-title">ANTIGRAVITY</span>
+            <span class="logo-subtitle">Cloud Run Swarm Console</span>
+          </div>
+        </div>
+        <div class="badge-pill">
+          <span class="status-dot pulse"></span>
+          <span>Cloud Run Gen2 MicroVM</span>
+        </div>
+        <div class="region-pill">
+          <span class="icon">📍</span>
+          <span>us-central1</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <button id="dispatchBtn" class="glass-btn btn-primary">
+          <span class="btn-icon">⚡</span>
+          <span>Dispatch Swarm</span>
+        </button>
+        <div class="user-pill">
+          <div class="user-avatar">admin</div>
+          <div class="user-details">
+            <span class="user-name">admin (admin-role)</span>
+            <span class="user-role">Authenticated • Session Active</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Metrics Row -->
+    <section class="metrics-grid">
+      <div class="glass-card metric-card">
+        <div class="metric-header">
+          <span class="metric-label">Active Swarm Agents</span>
+          <span class="metric-icon">🤖</span>
+        </div>
+        <div class="metric-value" id="activeAgentsCount">6 / 6</div>
+        <div class="metric-footer positive">
+          <span>● Parallel Subagent Concurrency</span>
+        </div>
+      </div>
+
+      <div class="glass-card metric-card">
+        <div class="metric-header">
+          <span class="metric-label">Deterministic Gate Status</span>
+          <span class="metric-icon">🛡️</span>
+        </div>
+        <div class="metric-value highlight-green" id="gatePassRate">100% Passed</div>
+        <div class="metric-footer">
+          <span>tsc • curl smoke • terraform validate</span>
+        </div>
+      </div>
+
+      <div class="glass-card metric-card">
+        <div class="metric-header">
+          <span class="metric-label">Total Token Consumption</span>
+          <span class="metric-icon">🧠</span>
+        </div>
+        <div class="metric-value highlight-cyan" id="tokenCount">42,890</div>
+        <div class="metric-footer">
+          <span>Prompt: 18.4k | Candidates: 14.1k | Thoughts: 10.3k</span>
+        </div>
+      </div>
+
+      <div class="glass-card metric-card">
+        <div class="metric-header">
+          <span class="metric-label">Cloud Run Job Sizing</span>
+          <span class="metric-icon">⚡</span>
+        </div>
+        <div class="metric-value">2 vCPU • 4 GiB</div>
+        <div class="metric-footer positive">
+          <span>CPU Boost: Active • Est. Cost: $0.038</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="glass-tabs">
+      <button class="tab-btn active" data-tab="swarm">
+        <span class="tab-icon">🎛️</span>
+        <span>Swarm Matrix</span>
+      </button>
+      <button class="tab-btn" data-tab="terminal">
+        <span class="tab-icon">💻</span>
+        <span>Linux Web Terminal</span>
+      </button>
+      <button class="tab-btn" data-tab="assets">
+        <span class="tab-icon">📦</span>
+        <span>Terraform & Assets</span>
+      </button>
+      <button class="tab-btn" data-tab="logs">
+        <span class="tab-icon">📜</span>
+        <span>Real-Time Audit Logs</span>
+      </button>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="glass-content">
+      
+      <!-- TAB 1: SWARM MATRIX -->
+      <section id="tab-swarm" class="tab-pane active">
+        <!-- Stage Stepper -->
+        <div class="glass-panel stage-tracker-panel">
+          <div class="panel-header">
+            <h3>Orchestration Stage Progression</h3>
+            <span class="stage-tag" id="currentStageBadge">Stage 3: Deterministic Gate</span>
+          </div>
+          <div class="stage-stepper">
+            <div class="step completed" id="step-0">
+              <div class="step-circle">0</div>
+              <div class="step-info">
+                <span class="step-name">Discovery</span>
+                <span class="step-desc">Target App Path</span>
+              </div>
+            </div>
+            <div class="step-line active"></div>
+            <div class="step completed" id="step-1">
+              <div class="step-circle">1</div>
+              <div class="step-info">
+                <span class="step-name">Contract</span>
+                <span class="step-desc">shared/types.ts</span>
+              </div>
+            </div>
+            <div class="step-line active"></div>
+            <div class="step completed" id="step-2">
+              <div class="step-circle">2</div>
+              <div class="step-info">
+                <span class="step-name">Parallel Dispatch</span>
+                <span class="step-desc">4 Concurrent Agents</span>
+              </div>
+            </div>
+            <div class="step-line active"></div>
+            <div class="step in-progress" id="step-3">
+              <div class="step-circle">3</div>
+              <div class="step-info">
+                <span class="step-name">Quality Gate</span>
+                <span class="step-desc">Zero-Token Terminal</span>
+              </div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step" id="step-4">
+              <div class="step-circle">4</div>
+              <div class="step-info">
+                <span class="step-name">Security Audit</span>
+                <span class="step-desc">Red-Team Checks</span>
+              </div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step" id="step-5">
+              <div class="step-circle">5</div>
+              <div class="step-info">
+                <span class="step-name">Delivery</span>
+                <span class="step-desc">Breakdown & PR</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subagents Grid -->
+        <div class="agents-grid">
+          <!-- Card 1: Backend Implementer -->
+          <div class="glass-card agent-card">
+            <div class="agent-card-header">
+              <div class="agent-identity">
+                <span class="agent-icon bg-blue">⚙️</span>
+                <div>
+                  <h4 class="agent-title">Backend Implementer</h4>
+                  <span class="agent-contract font-mono">backend_implementer.md</span>
+                </div>
+              </div>
+              <span class="agent-status-badge status-done">Done</span>
+            </div>
+            <div class="agent-scope">
+              <span class="scope-label">Write Scope:</span>
+              <code class="scope-path">/workspace/target-app/server/</code>
+            </div>
+            <p class="agent-desc">Constructed <code>POST /api/invites</code> route, database migrations, and 32-char crypto token generator.</p>
+            <div class="agent-meta">
+              <span>Tokens: 11.2k</span>
+              <span>•</span>
+              <span>100% Type-Safe</span>
+            </div>
+          </div>
+
+          <!-- Card 2: Frontend Implementer -->
+          <div class="glass-card agent-card">
+            <div class="agent-card-header">
+              <div class="agent-identity">
+                <span class="agent-icon bg-purple">🎨</span>
+                <div>
+                  <h4 class="agent-title">Frontend Implementer</h4>
+                  <span class="agent-contract font-mono">frontend_implementer.md</span>
+                </div>
+              </div>
+              <span class="agent-status-badge status-done">Done</span>
+            </div>
+            <div class="agent-scope">
+              <span class="scope-label">Write Scope:</span>
+              <code class="scope-path">/workspace/target-app/client/</code>
+            </div>
+            <p class="agent-desc">Built <code>InviteModal.tsx</code> React component with ARIA accessibility, form state validation, and loading indicators.</p>
+            <div class="agent-meta">
+              <span>Tokens: 9.8k</span>
+              <span>•</span>
+              <span>0 Any Types</span>
+            </div>
+          </div>
+
+          <!-- Card 3: Test Engineer -->
+          <div class="glass-card agent-card">
+            <div class="agent-card-header">
+              <div class="agent-identity">
+                <span class="agent-icon bg-amber">🧪</span>
+                <div>
+                  <h4 class="agent-title">Test Engineer</h4>
+                  <span class="agent-contract font-mono">test_engineer.md</span>
+                </div>
+              </div>
+              <span class="agent-status-badge status-running">Verifying</span>
+            </div>
+            <div class="agent-scope">
+              <span class="scope-label">Write Scope:</span>
+              <code class="scope-path">/workspace/target-app/tests/e2e/</code>
+            </div>
+            <p class="agent-desc">Authoring and running curl-based HTTP smoke tests (<code>smoke.sh</code>) against the running app.</p>
+            <div class="agent-meta">
+              <span>Tokens: 8.4k</span>
+              <span>•</span>
+              <span>curl (no browser)</span>
+            </div>
+          </div>
+
+          <!-- Card 4: Terraform IaC Engineer -->
+          <div class="glass-card agent-card">
+            <div class="agent-card-header">
+              <div class="agent-identity">
+                <span class="agent-icon bg-cyan">🏗️</span>
+                <div>
+                  <h4 class="agent-title">Terraform IaC Engineer</h4>
+                  <span class="agent-contract font-mono">iac_engineer.md</span>
+                </div>
+              </div>
+              <span class="agent-status-badge status-done">Done</span>
+            </div>
+            <div class="agent-scope">
+              <span class="scope-label">Write Scope:</span>
+              <code class="scope-path">/workspace/target-app/infra/terraform/</code>
+            </div>
+            <p class="agent-desc">Generated <code>main.tf</code>, <code>variables.tf</code>, and <code>outputs.tf</code>. Validated via <code>tflint</code> & <code>terraform validate</code>.</p>
+            <div class="agent-meta">
+              <span>Tokens: 6.9k</span>
+              <span>•</span>
+              <span>No Apply Policy</span>
+            </div>
+          </div>
+
+          <!-- Card 5: Security Checker -->
+          <div class="glass-card agent-card">
+            <div class="agent-card-header">
+              <div class="agent-identity">
+                <span class="agent-icon bg-red">🛡️</span>
+                <div>
+                  <h4 class="agent-title">Adversarial Security Checker</h4>
+                  <span class="agent-contract font-mono">security_checker.md</span>
+                </div>
+              </div>
+              <span class="agent-status-badge status-queued">Queued</span>
+            </div>
+            <div class="agent-scope">
+              <span class="scope-label">Target Scope:</span>
+              <code class="scope-path">Entire Output Plane</code>
+            </div>
+            <p class="agent-desc">Awaiting deterministic gate clearance to execute adversarial checks: rate limits, CRLF injection, and privilege escalation.</p>
+            <div class="agent-meta">
+              <span>Trigger: Stage 4</span>
+              <span>•</span>
+              <span>Targeted Auditor</span>
+            </div>
+          </div>
+
+          <!-- Card 6: Transparency Explainer -->
+          <div class="glass-card agent-card">
+            <div class="agent-card-header">
+              <div class="agent-identity">
+                <span class="agent-icon bg-emerald">📋</span>
+                <div>
+                  <h4 class="agent-title">Transparency Explainer</h4>
+                  <span class="agent-contract font-mono">transparency_explainer.md</span>
+                </div>
+              </div>
+              <span class="agent-status-badge status-queued">Queued</span>
+            </div>
+            <div class="agent-scope">
+              <span class="scope-label">Output:</span>
+              <code class="scope-path">Swarm Execution Report</code>
+            </div>
+            <p class="agent-desc">Aggregates step history, token counts, and diff artifacts for SRE / Administrator confirmation.</p>
+            <div class="agent-meta">
+              <span>Trigger: Stage 5</span>
+              <span>•</span>
+              <span>Final Deliverable</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: LINUX WEB TERMINAL -->
+      <section id="tab-terminal" class="tab-pane">
+        <div class="terminal-container glass-panel">
+          <div class="terminal-bar">
+            <div class="terminal-controls">
+              <span class="t-btn t-close"></span>
+              <span class="t-btn t-min"></span>
+              <span class="t-btn t-max"></span>
+            </div>
+            <div class="terminal-title">
+              <span class="term-icon">💻</span>
+              <span>bash — agy@cloudrun:/workspace/target-app (Cloud Run Gen2)</span>
+            </div>
+            <div class="terminal-actions">
+              <button id="clearTermBtn" class="btn-tiny">Clear</button>
+              <button id="restartTermBtn" class="btn-tiny">Reset Session</button>
+            </div>
+          </div>
+          <div class="terminal-body" id="terminalOutput">
+            <div class="term-line info-line">Welcome to Google Antigravity Cloud Run Console</div>
+            <div class="term-line info-line">Execution Environment: <span class="term-green">Gen2 MicroVM</span> • Target: <span class="term-cyan">/workspace/target-app</span></div>
+            <div class="term-line info-line">Type <span class="term-yellow">'help'</span> to see available commands or click quick actions below.<br>&nbsp;</div>
+          </div>
+          <div class="terminal-input-bar">
+            <span class="prompt-user">agy@cloudrun</span>:<span class="prompt-path">~/target-app</span><span class="prompt-sym">$</span>
+            <input type="text" id="termInput" autofocus placeholder="Type a command (e.g. ls, cat infra/terraform/main.tf, validate, run)...">
+          </div>
+          <div class="terminal-shortcuts">
+            <span class="shortcut-label">Quick Actions:</span>
+            <button class="shortcut-chip" data-cmd="ls -la">ls -la</button>
+            <button class="shortcut-chip" data-cmd="cat infra/terraform/main.tf">cat main.tf</button>
+            <button class="shortcut-chip" data-cmd="terraform validate">terraform validate</button>
+            <button class="shortcut-chip" data-cmd="bash tests/smoke.sh">run smoke tests</button>
+            <button class="shortcut-chip" data-cmd="cat shared/types.ts">cat types.ts</button>
+            <button class="shortcut-chip" data-cmd="status">swarm status</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: TERRAFORM & ASSETS -->
+      <section id="tab-assets" class="tab-pane">
+        <div class="assets-workspace glass-panel">
+          <!-- File Tree Sidebar -->
+          <div class="assets-sidebar">
+            <div class="sidebar-heading">
+              <span>WORKSPACE ASSETS</span>
+              <span class="badge-mini">Read/Write</span>
+            </div>
+            <ul class="file-tree" id="fileTree">
+              <li class="folder-item expanded">
+                <span class="tree-label">📁 infra/terraform</span>
+                <ul class="sub-tree">
+                  <li class="file-item active" data-file="main.tf">📄 main.tf</li>
+                  <li class="file-item" data-file="variables.tf">📄 variables.tf</li>
+                  <li class="file-item" data-file="outputs.tf">📄 outputs.tf</li>
+                  <li class="file-item" data-file="versions.tf">📄 versions.tf</li>
+                </ul>
+              </li>
+              <li class="folder-item expanded">
+                <span class="tree-label">📁 shared</span>
+                <ul class="sub-tree">
+                  <li class="file-item" data-file="types.ts">📄 types.ts</li>
+                </ul>
+              </li>
+              <li class="folder-item expanded">
+                <span class="tree-label">📁 server</span>
+                <ul class="sub-tree">
+                  <li class="file-item" data-file="routes.ts">📄 routes.ts</li>
+                  <li class="file-item" data-file="models.ts">📄 models.ts</li>
+                </ul>
+              </li>
+              <li class="folder-item expanded">
+                <span class="tree-label">📁 tests/e2e</span>
+                <ul class="sub-tree">
+                  <li class="file-item" data-file="smoke.sh">📄 smoke.sh</li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Code Preview Pane -->
+          <div class="assets-preview">
+            <div class="preview-header">
+              <div class="preview-filepath" id="previewFilePath">
+                <span>📁 /workspace/target-app/infra/terraform/</span><strong id="currentFileName">main.tf</strong>
+              </div>
+              <div class="preview-actions">
+                <button id="copyCodeBtn" class="btn-tiny">Copy Code</button>
+                <button id="downloadCodeBtn" class="btn-tiny btn-accent">Download File</button>
+              </div>
+            </div>
+            <div class="code-container">
+              <pre><code id="codeBlock" class="language-hcl"></code></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: REAL-TIME AUDIT LOGS -->
+      <section id="tab-logs" class="tab-pane">
+        <div class="logs-panel glass-panel">
+          <div class="logs-header">
+            <div class="logs-title">
+              <span class="live-dot pulse"></span>
+              <h3>Cloud Logging Stream (@hooks.post_tool_call)</h3>
+            </div>
+            <div class="logs-filters">
+              <button class="filter-btn active" data-filter="all">All Logs</button>
+              <button class="filter-btn" data-filter="tools">Tool Calls</button>
+              <button class="filter-btn" data-filter="gates">Deterministic Gates</button>
+              <button class="filter-btn" data-filter="security">Security</button>
+            </div>
+          </div>
+          <div class="logs-terminal" id="logsContainer">
+            <!-- Dynamic Log Items Rendered via JS -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="glass-footer">
+      <div class="footer-left">
+        <span>Antigravity Swarm Architecture • Based on Google Cloud patterns by Gabriel Bechara</span>
+      </div>
+      <div class="footer-right">
+        <span class="status-indicator online">● Cloud Run Service Healthy</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

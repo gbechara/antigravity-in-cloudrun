@@ -1,0 +1,58 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+
+# Next.js build
+.next/
+out/
+build/
+dist/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+# tfvars carry real project IDs and secrets; the template is the tracked copy.
+*.tfvars
+*.tfvars.json
+!*.tfvars.template
+.terraform.lock.hcl
+
+# Environment & Secrets
+# `.env` holds real project IDs and secrets and must never be committed.
+# `.env.template` is the documented, committed copy — keep it tracked.
+.env
+.env.*
+!.env.template
+*.pem
+*.key
+
+# Test output
+# This project verifies with curl rather than a browser test runner, but these
+# are kept so a generated target app that adds one cannot commit its artifacts.
+test-results/
+blob-report/
+
+# OS & IDE
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.idea/
+.vscode/

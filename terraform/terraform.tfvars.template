@@ -1,0 +1,67 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# =============================================================================
+#  Terraform variables template
+# =============================================================================
+#
+#  Copy this file and fill in the values:
+#
+#      cp terraform.tfvars.template terraform.tfvars
+#
+#  `terraform.tfvars` is listed in .gitignore and must never be committed.
+#  This template is committed, so do not put real secrets in it.
+#
+#  Note that `terraform.tfstate` is also gitignored, and for the same reason:
+#  state records every variable value in plaintext, including the ones marked
+#  `sensitive`.
+#
+# =============================================================================
+
+
+# -----------------------------------------------------------------------------
+#  REQUIRED
+# -----------------------------------------------------------------------------
+
+# Your Google Cloud project ID. No default.
+project_id = "REPLACE_WITH_YOUR_PROJECT_ID"
+
+# NextAuth session signing secret, minimum 32 characters. No default.
+#
+# Generate one with:  openssl rand -hex 32
+#
+# A committed signing key is a public key: anyone could forge a valid admin
+# session against your deployment without ever needing the password.
+nextauth_secret = "REPLACE_WITH_OUTPUT_OF_openssl_rand_hex_32"
+
+# Password for the built-in username/password login, minimum 12 characters.
+# No default.
+#
+# Generate one with:  openssl rand -hex 12
+#
+# The console is served on a public endpoint, so a password published in the
+# repository would be a documented way in rather than a credential.
+admin_password = "REPLACE_WITH_OUTPUT_OF_openssl_rand_hex_12"
+
+
+# -----------------------------------------------------------------------------
+#  OPTIONAL
+# -----------------------------------------------------------------------------
+
+# Deployment region. Cloud Run instances and sandboxes are a Tech Preview and
+# are not available everywhere; us-east4 is known to work.
+region = "us-east4"
+
+# Google OAuth credentials for SSO. Leave empty to use only the built-in
+# admin credentials login. See ../docs/OAUTH_SETUP.md.
+google_client_id     = ""
+google_client_secret = ""

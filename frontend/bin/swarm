@@ -1,0 +1,177 @@
+#!/bin/bash
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+# Antigravity Swarm Sandbox CLI Runner
+# ==============================================================================
+set -e
+
+SWARM_DIR="/app/swarm-src"
+CONTROL_PLANE="/app/control-plane"
+TARGET_DIR="${TARGET_APP_DIR:-/workspace/target-app}"
+MODEL="${ANTIGRAVITY_MODEL:-gemini-2.5-flash}"
+
+case "$1" in
+  run)
+    shift
+    PROMPT=""
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        -m|--model)
+          MODEL="$2"
+          shift 2
+          ;;
+        --model=*)
+          MODEL="${1#*=}"
+          shift
+          ;;
+        *)
+          if [ -z "$PROMPT" ]; then
+            PROMPT="$1"
+          else
+            PROMPT="$PROMPT $1"
+          fi
+          shift
+          ;;
+      esac
+    done
+
+    if [ -z "$PROMPT" ]; then
+      PROMPT="Autoscaled Cloud Run microservice with VPC and Terraform IaC"
+    fi
+
+    # Sanitize model string
+    MODEL="$(echo "${MODEL}" | tr -d '\r' | sed -e 's/[~. /]*$//')"
+
+    echo ""
+    echo "===================================================================="
+    echo "⚡ Launching Antigravity Swarm in Cloud Run Sandbox"
+    echo "🧠 Foundation Model: $MODEL"
+    echo "🎯 Target Directory: $TARGET_DIR"
+    echo "📝 Prompt: $PROMPT"
+    echo "===================================================================="
+    echo ""
+
+    if [ -f "$SWARM_DIR/main.py" ]; then
+      ANTIGRAVITY_MODEL="$MODEL" python3 "$SWARM_DIR/main.py" --mode=cli --prompt="$PROMPT" --target-dir="$TARGET_DIR"
+    else
+      echo "[ERROR] Swarm runner not found at $SWARM_DIR/main.py"
+      exit 1
+    fi
+    ;;
+  models)
+    echo "Available Foundation Models:"
+    echo "  1. gemini-2.5-flash  - (Default) Fast swarm orchestration & low latency"
+    echo "  2. gemini-2.5-pro    - Deep reasoning & architecture design"
+    ;;
+  status)
+    echo "=== Antigravity Swarm Sandbox Status ==="
+    echo "Target Directory: $TARGET_DIR"
+    echo "Current Model: $MODEL"
+    if command -v sandbox >/dev/null 2>&1; then
+      echo "Cloud Run Sandbox: ACTIVE (Isolated execution boundary enabled)"
+    else
+      echo "Cloud Run Sandbox: Standard Container Environment"
+    fi
+    echo "Files in Target App:"
+    find "$TARGET_DIR" -maxdepth 3 -not -path '*/.*' 2>/dev/null || ls -la "$TARGET_DIR"
+    ;;
+  validate)
+    echo "=== Executing Deterministic Quality Gates ==="
+    # Two wrappers, so the boundary cannot silently drift:
+    #   gate() -- network-isolated sandbox, for inspecting generated code
+    #   net()  -- direct execution, for steps that must reach the network
+    #
+    # `sandbox do --allow-egress` builds a veth pair, which needs
+    # CAP_NET_ADMIN; this container runs as a non-root user by design, so an
+    # egress-capable sandbox is not available to it. PATH is also empty inside
+    # a sandbox, so it has to be re-established explicitly.
+    SBX_PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    if command -v sandbox >/dev/null 2>&1; then
+      echo "🛡️  Sandbox launcher detected: verification steps run network-isolated."
+      gate() { sandbox do -- /bin/sh -c "export PATH=$SBX_PATH; cd \"$PWD\" && $*"; }
+    else
+      echo "ℹ️  No sandbox launcher present; all steps run directly."
+      gate() { "$@"; }
+    fi
+    net() { "$@"; }
+
+    gates_passed=0
+
+    echo "--- Gate 1/3: terraform validate ---"
+    # Guarded: `terraform validate` reports success in an empty directory, so
+    # without this check a reset workspace would score a pass having verified
+    # precisely nothing.
+    if [ -f "$TARGET_DIR/infra/terraform/main.tf" ]; then
+      if (cd "$TARGET_DIR/infra/terraform" \
+          && net terraform init -backend=false \
+          && gate terraform validate); then
+        gates_passed=$((gates_passed + 1))
+      else
+        echo "   gate 1/3 failed"
+      fi
+    else
+      echo "   skipped: no infra/terraform/main.tf in $TARGET_DIR (dispatch a swarm run first)"
+    fi
+
+    echo "--- Gate 2/3: npm run type-check ---"
+    if [ -f "$TARGET_DIR/package.json" ]; then
+      # --include=dev is required: the image sets NODE_ENV=production, under
+      # which npm skips devDependencies and the install quietly does nothing.
+      if (cd "$TARGET_DIR" \
+          && { [ -d node_modules/typescript ] || net npm install --include=dev --no-audit --no-fund --silent; } \
+          && gate npm run --silent type-check); then
+        gates_passed=$((gates_passed + 1))
+      else
+        echo "   gate 2/3 failed"
+      fi
+    else
+      echo "   skipped: no package.json in $TARGET_DIR (dispatch a swarm run first)"
+    fi
+
+    echo "--- Gate 3/3: curl smoke suite ---"
+    if [ -f "$TARGET_DIR/tests/smoke.sh" ]; then
+      # Inherently networked: the suite exists to make HTTP requests, so it
+      # cannot run inside a network-isolated sandbox.
+      if (cd "$TARGET_DIR" \
+          && export BASE_URL="${BASE_URL:-http://localhost:${PORT:-3000}}" \
+          && net bash tests/smoke.sh); then
+        gates_passed=$((gates_passed + 1))
+      else
+        echo "   gate 3/3 failed"
+      fi
+    else
+      echo "   skipped: no tests/smoke.sh in $TARGET_DIR (dispatch a swarm run first)"
+    fi
+
+    echo "=== Quality gate summary: $gates_passed/3 passed ==="
+    ;;
+  reset|clean|reset-assets)
+    echo "=== Resetting Antigravity Swarm & Workspace Assets ==="
+    pkill -f "main.py" 2>/dev/null || true
+    echo "Cleaning target directory $TARGET_DIR..."
+    rm -rf "${TARGET_DIR:?}"/*
+    mkdir -p "$TARGET_DIR/infra/terraform" "$TARGET_DIR/shared" "$TARGET_DIR/server"
+    echo "✅ Swarm reset completed. Target workspace is clean (0 assets)."
+    ;;
+  *)
+    echo "Antigravity Swarm Sandbox CLI"
+    echo ""
+    echo "Usage:"
+    echo "  swarm run \"<prompt>\" [--model=<model>]   - Execute multi-agent swarm"
+    echo "  swarm models                            - List available foundation models"
+    echo "  swarm status                            - Check generated files & directory tree"
+    echo "  swarm validate                          - Run deterministic terraform quality gate"
+    echo "  swarm reset                             - Kill running swarm & reset target workspace"
+    echo ""
+    ;;
+esac

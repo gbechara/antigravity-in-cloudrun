@@ -1,0 +1,21 @@
+# Build context is the repository root; keep it small and avoid shipping
+# local state or credentials into either image.
+**/node_modules
+**/.next
+.git
+**/*.log
+**/__pycache__
+**/*.py[cod]
+
+# Terraform local state may contain secrets (e.g. NEXTAUTH_SECRET).
+terraform/.terraform
+terraform/*.tfstate
+terraform/*.tfstate.*
+
+# Not needed inside the images.
+# NOTE: do NOT exclude *.md — control-plane/ agent contracts and
+# orchestrator.md are markdown and are required at runtime.
+docs
+vanilla-dashboard
+CONTRIBUTING.md
+README.md
