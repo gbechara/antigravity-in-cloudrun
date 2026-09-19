@@ -48,7 +48,7 @@ This architecture includes a secured **Next.js Web Console** equipped with **OAu
                         │             │  Deterministic Quality Gate │
                         │             │ • tsc / type-check          │
                         │             │ • bash tests/smoke.sh (curl)│
-                        │             │ • terraform validate/tflint │
+                        │             │ • terraform validate        │
                         │             └──────────────┬──────────────┘
                         │                            │
                         ▼                            ▼
@@ -67,13 +67,14 @@ This architecture includes a secured **Next.js Web Console** equipped with **OAu
 ## Key Pillars from the Antigravity Swarm Pattern
 
 1. **Control Plane vs. Output Plane Separation**:
-   * **Control Plane (`control-plane/`)**: Read-only directory housing `orchestrator.md`, modular subagent contracts, and agent skills. Shared by both container images. Keeps prompt engineering out of customer repositories.
+   * **Control Plane (`control-plane/`)**: The swarm's *instructions* — `orchestrator.md`, the modular subagent contracts, and the agent skills. This is the input the harness reads to decide which subagents to dispatch and which directory subtree each one is allowed to write to. It lands at `/app/control-plane` in both images, and the harness only ever reads from it: it is an input, not a workspace. Keeps prompt engineering out of customer repositories.
+   * **Both images carry it, because either one can start a run.** The backend image runs the swarm headless (`python3 /app/src/main.py`). The console image ships the same `swarm-src/` harness plus the `swarm` CLI on `PATH`, so a run can be launched straight from the web terminal without a backend service deployed at all. Both resolve the same `CONTROL_PLANE_DIR=/app/control-plane`, which is why `swarm-src/config.py` needs no per-image branching.
    * **Output Plane (`/workspace/target-app/`)**: The active workspace where code and Terraform are authored, compiled, and tested.
 2. **Strict Sub-Tree Scoping**:
    * Each subagent is locked to its directory subtree (Backend $\to$ `/server/`, Frontend $\to$ `/client/`, Tests $\to$ `/tests/`, Terraform $\to$ `/infra/terraform/`).
    * Eliminates race conditions and merge collisions during parallel execution.
 3. **Asymmetric Verification Pipeline**:
-   * **Deterministic Gates First (Zero Token Cost)**: Before any LLM auditor is invoked, the container runs `tsc`, the `curl` smoke suite, and `terraform validate` directly in the terminal.
+   * **Deterministic Gates First (Zero Token Cost)**: Before any LLM auditor is invoked, the container runs `npm run type-check`, the `curl` smoke suite (`tests/smoke.sh`), and `terraform validate` directly in the terminal.
    * **Targeted Semantic Checkers**: Security auditing and transparency explainers only run after deterministic tests achieve a 100% pass rate.
 4. **Cloud Run Gen 2 MicroVM Sandbox**:
    * Uses Cloud Run Execution Environment Gen 2 (`--execution-environment=gen2`) for full Linux system call compatibility and fast NVMe disk I/O.
@@ -84,58 +85,86 @@ This architecture includes a secured **Next.js Web Console** equipped with **OAu
 ## Directory Structure
 
 ```
-agy-in-cloudrun/
+antigravity-in-cloudrun/
 ├── README.md                      # Repository documentation & guide
-├── deploy.sh                      # One-click deployment script for GCP
-├── docs/
-│   ├── ARCHITECTURE.md            # Deep dive into multi-agent swarms
-│   ├── CLOUD_RUN_GUIDE.md         # Sandbox Gen 1 vs Gen 2, sizing & IAM
-│   └── OAUTH_SETUP.md             # Google OAuth 2.0 / SSO configuration guide
-├── backend/                       # Python Antigravity Swarm Service
+├── LICENSE                        # Apache License 2.0
+├── .env.template                  # Documented environment variables (copy to .env)
+│
+├── control-plane/                 # SHARED — the swarm's instructions. Baked into BOTH images.
+│   ├── orchestrator.md            # Master Orchestrator Playbook (Stages 0-5)
+│   ├── agents/                    # Subagent contracts (.md)
+│   │   ├── backend_implementer.md
+│   │   ├── frontend_implementer.md
+│   │   ├── test_engineer.md
+│   │   ├── iac_engineer.md        # Terraform IaC Subagent
+│   │   ├── security_checker.md
+│   │   └── transparency_explainer.md
+│   └── skills/                    # Domain Skills (Agent Skills Spec)
+│       └── terraform_validator/
+│           └── SKILL.md
+│
+├── swarm-src/                     # SHARED — the Antigravity SDK harness. Baked into BOTH images.
+│   ├── main.py                    # FastAPI API server & job runner CLI
+│   ├── config.py                  # Environment & Vertex AI configuration
+│   └── hooks.py                   # Lifecycle hooks for token tracking & audit logs
+│
+├── backend/                       # Headless swarm service image
 │   ├── Dockerfile                 # Minimal Cloud Run container (curl + Terraform, no browser)
-│   ├── requirements.txt           # Python dependencies (google-antigravity, fastapi)
-│   ├── src/
-│   │   ├── main.py                # FastAPI API server & Job runner CLI
-│   │   ├── config.py              # Environment & Vertex AI configuration
-│   │   └── hooks.py               # Lifecycle hooks for token tracking & audit logs
-│   └── control-plane/             # Swarm playbooks and subagent specifications
-│       ├── orchestrator.md        # Master Orchestrator Playbook (Stages 0-5)
-│       ├── agents/                # Subagent contracts (.md)
-│       │   ├── backend_implementer.md
-│       │   ├── frontend_implementer.md
-│       │   ├── test_engineer.md
-│       │   ├── iac_engineer.md    # Terraform IaC Subagent
-│       │   ├── security_checker.md
-│       │   └── transparency_explainer.md
-│       └── skills/                # Domain Skills (Agent Skills Spec)
-│           └── terraform_validator/
-│               └── SKILL.md
-├── frontend/                      # Next.js Web Console & Linux Terminal
-│   ├── Dockerfile                 # Multi-stage Dockerfile with node-pty C++ build
+│   └── requirements.txt           # Python dependencies (google-antigravity, fastapi)
+│
+├── frontend/                      # Next.js Web Console & Linux Terminal image
+│   ├── Dockerfile                 # Multi-stage build with node-pty; also copies the shared dirs
 │   ├── package.json               # Next.js 14, NextAuth, xterm.js, node-pty, ws
 │   ├── server.js                  # Custom server with WebSocket Linux PTY gateway
+│   ├── bin/swarm                  # CLI that launches a swarm run from inside the console
 │   └── src/
 │       ├── app/
 │       │   ├── page.tsx           # Dashboard view
 │       │   ├── login/page.tsx     # OAuth + Credentials Login
 │       │   ├── terminal/page.tsx  # Linux Web Terminal view
-│       │   └── api/auth/[...nextauth]/route.ts
-│       ├── components/
-│       │   ├── WebTerminal.tsx    # xterm.js terminal emulator
-│       │   └── AssetBrowser.tsx   # Terraform & file tree browser
-│       └── lib/
-│           └── auth.ts            # NextAuth credential options
-├── vanilla-dashboard/             # Premium Glassmorphic Vanilla CSS/JS Dashboard (Zero Build Step)
+│       │   └── api/               # swarm, swarm/reset, assets, assets/reset, auth
+│       ├── components/            # ConsoleDashboard, SwarmVisualizer, WebTerminal,
+│       │                          # AgentExecutionPanel, AssetBrowser, HowToUsePanel
+│       └── lib/auth.ts            # NextAuth credential options
+│
+├── docs/
+│   ├── ARCHITECTURE.md            # Deep dive into multi-agent swarms
+│   ├── CLOUD_RUN_GUIDE.md         # Sandbox Gen 1 vs Gen 2, sizing & IAM
+│   └── OAUTH_SETUP.md             # Google OAuth 2.0 / SSO configuration guide
+│
+├── scripts/
+│   ├── gcp-common.sh              # Shared gcloud helpers
+│   ├── load-env.sh                # .env loader used by the deploy scripts
+│   └── patch_agent_contracts.py   # Rewrites agent contract write scopes
+│
+├── vanilla-dashboard/             # Glassmorphic Vanilla CSS/JS Dashboard (Zero Build Step)
 │   ├── index.html                 # App shell with ambient glow orbs & stage stepper
-│   ├── styles.css                 # Vanilla CSS glassmorphic design system (blur, mesh orbs, specular)
-│   ├── app.js                     # Vanilla JS terminal emulator, swarm dispatcher & asset viewer
+│   ├── styles.css                 # Vanilla CSS glassmorphic design system
+│   ├── app.js                     # Vanilla JS terminal emulator & swarm dispatcher
 │   └── README.md                  # Quickstart guide (open directly in browser)
-└── terraform/                     # Infrastructure as Code to deploy on GCP
-    ├── main.tf                    # Cloud Run Service, Cloud Run Job, IAM, Artifact Registry
-    ├── variables.tf
-    ├── outputs.tf
-    └── versions.tf
+│
+├── terraform/                     # Infrastructure as Code to deploy on GCP
+│   ├── main.tf                    # Cloud Run Service, Cloud Run Job, IAM, Artifact Registry
+│   ├── variables.tf
+│   ├── outputs.tf
+│   ├── versions.tf
+│   └── terraform.tfvars.template
+│
+├── deploy.sh                      # Deploys the Cloud Run *service*
+├── deploy-instance.sh             # Deploys a Cloud Run *instance* (Gen 2 MicroVM + sandbox launcher)
+├── run-local.sh                   # Runs the console image locally under Docker
+├── cloudbuild.backend.yaml        # Build context is the repo root (see note below)
+└── cloudbuild.frontend.yaml       # Build context is the repo root (see note below)
 ```
+
+> **Why `control-plane/` and `swarm-src/` sit at the repository root**
+>
+> Both are build inputs to **both** images, so neither can live inside `backend/`
+> or `frontend/`. Both Cloud Build configs therefore use the **repository root**
+> as the Docker build context rather than a per-service subdirectory, and each
+> Dockerfile copies the two shared directories in by path. That keeps a single
+> source of truth: edit an agent contract once and both images pick it up on the
+> next build, with no syncing step and no way for the two to drift apart.
 
 ---
 

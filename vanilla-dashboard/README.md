@@ -36,12 +36,12 @@ A zero-dependency, ultra-fast **Glassmorphic Frontend Dashboard** built purely w
 ### Option 1: Direct File Open
 Simply double-click `index.html` or open it directly in Google Chrome / any modern browser:
 ```bash
-google-chrome ~/dev/agy-in-cloudrun/vanilla-dashboard/index.html
+google-chrome ~/dev/antigravity-in-cloudrun/vanilla-dashboard/index.html
 ```
 
 ### Option 2: Run with Python Built-in Static Server
 ```bash
-cd ~/dev/agy-in-cloudrun/vanilla-dashboard
+cd ~/dev/antigravity-in-cloudrun/vanilla-dashboard
 python3 -m http.server 8080
 # Open http://localhost:8080 in your browser
 ```
